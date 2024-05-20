@@ -791,7 +791,6 @@ export interface RawCssExtractPluginOption {
 }
 
 export interface RawCssGeneratorOptions {
-  exportsConvention?: "as-is" | "camel-case" | "camel-case-only" | "dashes" | "dashes-only"
   exportsOnly?: boolean
   esModule?: boolean
 }
@@ -837,6 +836,10 @@ export interface RawEntryPluginOptions {
   context: string
   entry: string
   options: RawEntryOptions
+}
+
+export interface RawEnvironment {
+  arrowFunction?: boolean
 }
 
 export interface RawEvalDevToolModulePluginOptions {
@@ -1151,6 +1154,7 @@ export interface RawOutputOptions {
   workerWasmLoading: string
   workerPublicPath: string
   scriptType: "module" | "text/javascript" | "false"
+  environment: RawEnvironment
 }
 
 export interface RawParserOptions {

@@ -59,6 +59,7 @@ import {
 	CssModuleParserOptions,
 	CssParserOptions,
 	EntryRuntime,
+	Environment,
 	GeneratorOptionsByModuleType,
 	JavascriptParserOptions,
 	LibraryName,
@@ -248,7 +249,8 @@ function getRawOutput(output: OutputNormalized): RawOptions["output"] {
 		workerWasmLoading:
 			workerWasmLoading === false ? "false" : workerWasmLoading,
 		workerPublicPath: output.workerPublicPath!,
-		scriptType: output.scriptType === false ? "false" : output.scriptType!
+		scriptType: output.scriptType === false ? "false" : output.scriptType!,
+		environment: output.environment!
 	};
 }
 
@@ -765,7 +767,6 @@ function getRawCssGeneratorOptions(
 	options: CssGeneratorOptions
 ): RawCssGeneratorOptions {
 	return {
-		exportsConvention: options.exportsConvention,
 		exportsOnly: options.exportsOnly,
 		esModule: options.esModule
 	};
