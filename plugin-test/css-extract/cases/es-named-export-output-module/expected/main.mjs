@@ -9,8 +9,7 @@ __webpack_require__.d(__webpack_exports__, {
 // extracted by css-extract-rspack-plugin
 var aClass = "foo__style__a-class";
 var bClass = "foo__style__b__class";
-var cClass = "foo__style__cClass";
-}),
+var cClass = "foo__style__cClass";}),
 
 });
 /************************************************************************/
@@ -73,13 +72,9 @@ var __webpack_exports__ = {};
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */var _style_css__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__("./style.css?eccb");
 
+
 // eslint-disable-next-line no-console
-console.log({
-    css: _style_css__WEBPACK_IMPORTED_MODULE_0__["default"],
-    aClass: _style_css__WEBPACK_IMPORTED_MODULE_0__.aClass,
-    bClass: _style_css__WEBPACK_IMPORTED_MODULE_0__.bClass,
-    cClass: _style_css__WEBPACK_IMPORTED_MODULE_0__.cClass
-});
+console.log({ css: _style_css__WEBPACK_IMPORTED_MODULE_0__["default"], aClass: _style_css__WEBPACK_IMPORTED_MODULE_0__.aClass, bClass: _style_css__WEBPACK_IMPORTED_MODULE_0__.bClass, cClass: _style_css__WEBPACK_IMPORTED_MODULE_0__.cClass });
 
 })();
 

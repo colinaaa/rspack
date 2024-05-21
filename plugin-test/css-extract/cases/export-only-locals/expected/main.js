@@ -4,7 +4,6 @@ var __webpack_modules__ = ({
 "./style.css": (function (__unused_webpack_module, __webpack_exports__, __webpack_require__) {
 __webpack_require__.r(__webpack_exports__);
 // extracted by css-extract-rspack-plugin
-
 }),
 
 });
@@ -51,12 +50,9 @@ var __webpack_exports__ = {};
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */var _style_css__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__("./style.css");
 
+
 // eslint-disable-next-line no-console
-console.log({
-    aClass: _style_css__WEBPACK_IMPORTED_MODULE_0__.aClass,
-    bClass: _style_css__WEBPACK_IMPORTED_MODULE_0__.bClass,
-    cClass: _style_css__WEBPACK_IMPORTED_MODULE_0__.cClass
-});
+console.log({ aClass: _style_css__WEBPACK_IMPORTED_MODULE_0__.aClass, bClass: _style_css__WEBPACK_IMPORTED_MODULE_0__.bClass, cClass: _style_css__WEBPACK_IMPORTED_MODULE_0__.cClass });
 
 })();
 

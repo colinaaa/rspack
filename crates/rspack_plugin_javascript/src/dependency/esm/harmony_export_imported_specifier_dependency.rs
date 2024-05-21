@@ -932,6 +932,8 @@ impl DependencyTemplate for HarmonyExportImportedSpecifierDependency {
             &self.id,
             false,
             false,
+            // FIXME: add ansi safe
+            None,
           )),
         ));
       } else {
@@ -946,6 +948,8 @@ impl DependencyTemplate for HarmonyExportImportedSpecifierDependency {
             &self.id,
             false,
             false,
+            // FIXME: add ansi safe
+            None,
           )),
         ));
       }

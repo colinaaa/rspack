@@ -4,7 +4,6 @@ var __webpack_modules__ = ({
 "./style.css?b16f": (function (__unused_webpack_module, __webpack_exports__, __webpack_require__) {
 __webpack_require__.r(__webpack_exports__);
 // extracted by css-extract-rspack-plugin
-
 }),
 
 });

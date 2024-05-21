@@ -20,6 +20,7 @@ pub struct HarmonyImportSpecifierDependency {
   request: Atom,
   source_order: i32,
   shorthand: bool,
+  asi_safe: Option<bool>,
   start: u32,
   end: u32,
   ids: Vec<Atom>,
@@ -39,6 +40,7 @@ impl HarmonyImportSpecifierDependency {
     request: Atom,
     source_order: i32,
     shorthand: bool,
+    asi_safe: Option<bool>,
     start: u32,
     end: u32,
     ids: Vec<Atom>,
@@ -54,6 +56,7 @@ impl HarmonyImportSpecifierDependency {
       request,
       source_order,
       shorthand,
+      asi_safe,
       start,
       end,
       ids,
@@ -235,6 +238,13 @@ impl DependencyTemplate for HarmonyImportSpecifierDependency {
         &self.id,
         self.call,
         !self.direct_import,
+        // FIXME: add asi safe
+        None,
+        // if self.shorthand.unwrap_or_default() {
+        //   Some(true)
+        // } else {
+        //   self.asi_safe
+        // },
       )
     };
 

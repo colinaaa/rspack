@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use rspack_ast::javascript::Ast;
+use rspack_core::rspack_sources::{ConcatSource, RawSource, Source, SourceExt};
 use rspack_core::ModuleType;
 use rspack_error::TraceableError;
 use swc_core::common::comments::Comments;
@@ -64,23 +65,26 @@ pub fn parse_js(
 }
 
 pub fn parse(
-  source_code: String,
+  source_code: Arc<dyn Source>,
   syntax: Syntax,
   filename: &str,
   module_type: &ModuleType,
-) -> Result<(Ast, Arc<SourceFile>), Vec<TraceableError>> {
+) -> Result<(Ast, Arc<SourceFile>, Arc<dyn Source>), Vec<TraceableError>> {
   let source_code = if syntax.dts() {
     // dts build result must be empty
-    "".to_string()
-  } else if source_code.starts_with("#!") {
+    RawSource::from("").boxed()
+  } else if source_code.source().starts_with("#!") {
     // this is a hashbang comment
-    format!("//{source_code}")
+    ConcatSource::new([RawSource::from("//").boxed(), source_code]).boxed()
   } else {
     source_code
   };
 
   let cm: Arc<swc_core::common::SourceMap> = Default::default();
-  let fm = cm.new_source_file(FileName::Custom(filename.to_string()), source_code);
+  let fm = cm.new_source_file(
+    FileName::Custom(filename.to_string()),
+    source_code.source().to_string(),
+  );
   let comments = SwcComments::default();
 
   match parse_js(
@@ -90,7 +94,11 @@ pub fn parse(
     module_type_to_is_module(module_type),
     Some(&comments),
   ) {
-    Ok(program) => Ok((Ast::new(program, cm, Some(comments)), fm.clone())),
+    Ok(program) => Ok((
+      Ast::new(program, cm, Some(comments)),
+      fm.clone(),
+      source_code,
+    )),
     Err(errs) => Err(
       errs
         .dedup_ecma_errors()

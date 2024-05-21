@@ -77,7 +77,7 @@ pub struct InnerGraphState {
 }
 
 pub struct InnerGraphPlugin<'a> {
-  dependencies: &'a mut Vec<Box<dyn Dependency>>,
+  pub dependencies: &'a mut Vec<Box<dyn Dependency>>,
   unresolved_ctxt: SyntaxContext,
   state: InnerGraphState,
   scope_level: usize,
@@ -342,10 +342,11 @@ impl<'a> Visit for InnerGraphPlugin<'a> {
       && self.is_toplevel()
     {
       let symbol = ident.id.sym.clone();
-      match init {
+      let init_ = init.unwrap_parens();
+      match init_ {
         Expr::Fn(_) | Expr::Arrow(_) | Expr::Lit(_) => {
           self.set_symbol_if_is_top_level(symbol);
-          init.visit_children_with(self);
+          init_.visit_children_with(self);
           self.clear_symbol_if_is_top_level();
         }
         Expr::Class(class) => {
@@ -357,7 +358,7 @@ impl<'a> Visit for InnerGraphPlugin<'a> {
           self.clear_symbol_if_is_top_level();
         }
         _ => {
-          init.visit_children_with(self);
+          init_.visit_children_with(self);
           if is_pure_expression(init, self.unresolved_ctxt, self.comments.as_ref()) {
             self.set_symbol_if_is_top_level(symbol);
             let start = init.span().real_lo();
@@ -460,6 +461,8 @@ impl<'a> Visit for InnerGraphPlugin<'a> {
         self.clear_symbol_if_is_top_level();
       }
       _ => {
+        // keep the parens to support case like `/*#__PURE__*/(foo())`
+        let expr = &node.expr;
         if is_pure_expression(expr, self.unresolved_ctxt, self.comments.as_ref()) {
           self.set_symbol_if_is_top_level(DEFAULT_EXPORT.into());
           let start = expr.span().real_lo();
