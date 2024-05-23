@@ -135,5 +135,21 @@ export default defineConfig({
         ],
       },
     },
+    tools: {
+      rspack: {
+        experiments: {
+          lazyCompilation: {
+            // entries: false,
+            test(module) {
+              const isMyClient = module
+                .nameForCondition()
+                ?.includes('@rsbuild/core/dist');
+
+              return !isMyClient;
+            },
+          },
+        },
+      },
+    },
   },
 });

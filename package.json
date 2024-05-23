@@ -50,9 +50,15 @@
   "engines": {
     "pnpm": "8.14.3"
   },
+  "pnpm": {
+    "overrides": {
+      "@rspack/core": "link:packages/rspack"
+    }
+  },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.43.1",
     "@rspack/cli": "workspace:*",
+    "@rspack/core": "workspace:*",
     "@taplo/cli": "^0.7.0",
     "@types/is-ci": "^3.0.4",
     "@types/jest": "29.5.12",
