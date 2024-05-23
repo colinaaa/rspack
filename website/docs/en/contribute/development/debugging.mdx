@@ -120,7 +120,7 @@ It's necessary to configure two debug configurations within in `.vscode/launch.j
   "request": "attach", // refer: https://code.visualstudio.com/docs/editor/debugging#_launch-versus-attach-configurations
   "type": "node",
   // `9229` is the default port of message
-  "port": 9229
+  "port": 9229,
 }
 ```
 
@@ -138,10 +138,10 @@ It's necessary to configure two debug configurations within in `.vscode/launch.j
     "${workspaceFolder}/packages/rspack-cli/bin/rspack",
     "build",
     "-c",
-    "${workspaceFolder}/examples/basic/rspack.config.js"
+    "${workspaceFolder}/examples/basic/rspack.config.js",
   ],
   // `cwd` is just for repack find the correctly entry.
-  "cwd": "${workspaceFolder}/examples/basic/"
+  "cwd": "${workspaceFolder}/examples/basic/",
 }
 ```
 
