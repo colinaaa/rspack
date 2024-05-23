@@ -15,10 +15,7 @@ import {
 import { IMultiTaskProcessorOptions, MultiTaskProcessor } from "./multi";
 
 export interface IStatsProcessorOptions<T extends ECompilerType>
-	extends Omit<
-		IMultiTaskProcessorOptions<T>,
-		"defaultOptions" | "overrideOptions" | "runable"
-	> {}
+	extends Omit<IMultiTaskProcessorOptions<T>, "runable"> {}
 
 const REG_ERROR_CASE = /error$/;
 const quoteMeta = (str: string) => {
@@ -177,7 +174,7 @@ export class StatsProcessor<
 			.replace(/Rspack [^ )]+(\)?) compiled/g, "Rspack x.x.x$1 compiled")
 			.replace(
 				new RegExp(quoteMeta(testPath), "g"),
-				"Xdir/" + this._options.name
+				"Xdir/" + path.basename(this._options.name)
 			)
 			.replace(/(\w)\\(\w)/g, "$1/$2")
 			.replace(/, additional resolving: X ms/g, "")

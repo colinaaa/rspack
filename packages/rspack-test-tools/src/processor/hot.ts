@@ -1,4 +1,5 @@
 import { rspack } from "@rspack/core";
+import fs from "fs-extra";
 import path from "path";
 
 import {
@@ -11,15 +12,13 @@ import {
 import { BasicProcessor, IBasicProcessorOptions } from "./basic";
 
 export interface IHotProcessorOptions<T extends ECompilerType>
-	extends Omit<
-		IBasicProcessorOptions<T>,
-		"defaultOptions" | "overrideOptions" | "runable" | "findBundle"
-	> {
+	extends Omit<IBasicProcessorOptions<T>, "runable"> {
 	target: TCompilerOptions<T>["target"];
 }
 
 export type TUpdateOptions = {
 	updateIndex: number;
+	totalIndex: number;
 };
 
 export class HotProcessor<T extends ECompilerType> extends BasicProcessor<T> {
@@ -28,7 +27,8 @@ export class HotProcessor<T extends ECompilerType> extends BasicProcessor<T> {
 
 	constructor(protected _hotOptions: IHotProcessorOptions<T>) {
 		const fakeUpdateLoaderOptions: TUpdateOptions = {
-			updateIndex: 0
+			updateIndex: 0,
+			totalIndex: 0
 		};
 		super({
 			defaultOptions: HotProcessor.defaultOptions(
@@ -47,6 +47,18 @@ export class HotProcessor<T extends ECompilerType> extends BasicProcessor<T> {
 	}
 
 	async run(env: ITestEnv, context: ITestContext) {
+		const changedFiles: string[] = require(
+			context.getSource("changed-file.js")
+		);
+		this.updateOptions.totalIndex = changedFiles.reduce<number>(
+			(res: number, file: string) => {
+				return Math.max(
+					fs.readFileSync(file, "utf-8").split("---").length,
+					res
+				);
+			},
+			0
+		);
 		context.setValue(
 			this._options.name,
 			"hotUpdateContext",
@@ -82,6 +94,15 @@ export class HotProcessor<T extends ECompilerType> extends BasicProcessor<T> {
 			}
 			return [...prefiles, ...files];
 		};
+	}
+
+	async afterAll(context: ITestContext) {
+		await super.afterAll(context);
+		if (this.updateOptions.updateIndex + 1 !== this.updateOptions.totalIndex) {
+			throw new Error(
+				`Should run all hot steps (${this.updateOptions.updateIndex + 1} / ${this.updateOptions.totalIndex}): ${this._options.name}`
+			);
+		}
 	}
 
 	static defaultOptions<T extends ECompilerType>(
