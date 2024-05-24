@@ -40,7 +40,7 @@
     "@rspack/core": "workspace:*",
     "@rspack/plugin-react-refresh": "workspace:*",
     "@svgr/webpack": "^8.0.0",
-    "@swc/core": "1.4.0",
+    "@swc/core": "1.5.7",
     "@swc/helpers": "^0.5.3",
     "bundle-stats": "^4.1.2",
     "css-loader": "^6.8.1",
@@ -50,7 +50,7 @@
     "mini-css-extract-plugin": "^2.6.1",
     "postcss-loader": "^8.0.0",
     "react-refresh": "^0.14.0",
-    "serve": "14.2.1",
+    "serve": "14.2.3",
     "style-loader": "^3.3.3",
     "swc-loader": "^0.2.3",
     "webpack": "^5.90.1"
