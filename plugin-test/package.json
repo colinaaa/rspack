@@ -12,7 +12,7 @@
     "@rspack/core": "workspace:*",
     "@rspack/plugin-minify": "workspace:^",
     "jsdom": "^24.0.0",
-    "del": "^6.0.0",
+    "del": "^7.0.0",
     "memfs": "4.7.7"
   },
   "dependencies": {}
