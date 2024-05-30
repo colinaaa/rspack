@@ -1,8 +1,10 @@
+use std::cmp::{max, min};
+
 use rayon::prelude::*;
 use rspack_core::rspack_sources::{BoxSource, ConcatSource, RawSource, SourceExt};
 use rspack_core::{
-  to_normal_comment, BoxModule, ChunkInitFragments, ChunkUkey, Compilation, RuntimeGlobals,
-  SourceType,
+  compare_modules_by_pre_order_index_or_identifier, to_normal_comment, BoxModule,
+  ChunkInitFragments, ChunkUkey, Compilation, RuntimeGlobals, SourceType,
 };
 use rspack_error::{error, Result};
 use rspack_util::diff_mode::is_diff_mode;
@@ -16,12 +18,28 @@ pub fn render_chunk_modules(
   ordered_modules: Vec<&BoxModule>,
   all_strict: bool,
 ) -> Result<Option<(BoxSource, ChunkInitFragments)>> {
+  let bounds = get_modules_array_bounds(
+    &ordered_modules
+      .iter()
+      .map(|module| compilation.chunk_graph.get_module_id(module.identifier()))
+      .collect::<Vec<_>>(),
+  );
+
   let mut module_code_array = ordered_modules
     .par_iter()
     .filter_map(|module| {
-      render_module(compilation, chunk_ukey, module, all_strict, true)
-        .transpose()
-        .map(|result| result.map(|(s, f, a)| (module.identifier(), s, f, a)))
+      render_module(
+        compilation,
+        chunk_ukey,
+        module,
+        all_strict,
+        Some(match bounds {
+          None => RenderModuleFactory::Object,
+          _ => RenderModuleFactory::Array,
+        }),
+      )
+      .transpose()
+      .map(|result| result.map(|(s, f, a)| (module.identifier(), s, f, a)))
     })
     .collect::<Result<Vec<_>>>()?;
 
@@ -29,7 +47,13 @@ pub fn render_chunk_modules(
     return Ok(None);
   }
 
-  module_code_array.sort_unstable_by_key(|(module_identifier, _, _, _)| *module_identifier);
+  if bounds.is_none() {
+    module_code_array.sort_unstable_by_key(|(module_identifier, _, _, _)| *module_identifier);
+  } else {
+    module_code_array.sort_unstable_by(|(a, _, _, _), (b, _, _, _)| {
+      compare_modules_by_pre_order_index_or_identifier(&compilation.get_module_graph(), a, b)
+    });
+  }
 
   let chunk_init_fragments = module_code_array.iter().fold(
     ChunkInitFragments::default(),
@@ -53,11 +77,33 @@ pub fn render_chunk_modules(
     .collect::<Vec<ConcatSource>>();
 
   let mut sources = ConcatSource::default();
-  sources.add(RawSource::from("{\n"));
-  sources.add(ConcatSource::new(module_sources));
-  sources.add(RawSource::from("\n}"));
+
+  if let Some((min_id, _)) = bounds {
+    // Render a spare array
+    if min_id != 0 {
+      sources.add(RawSource::from(format!("Array({min_id}).concat(")));
+    }
+
+    sources.add(RawSource::from("[\n"));
+    sources.add(ConcatSource::new(module_sources));
+    sources.add(RawSource::from("\n]"));
+
+    if min_id != 0 {
+      sources.add(RawSource::from(")"));
+    }
+  } else {
+    // Render an object
+    sources.add(RawSource::from("{\n"));
+    sources.add(ConcatSource::new(module_sources));
+    sources.add(RawSource::from("\n}"));
+  }
 
   Ok(Some((sources.boxed(), chunk_init_fragments)))
+}
+
+pub enum RenderModuleFactory {
+  Object,
+  Array,
 }
 
 pub fn render_module(
@@ -65,7 +111,7 @@ pub fn render_module(
   chunk_ukey: &ChunkUkey,
   module: &BoxModule,
   all_strict: bool,
-  factory: bool,
+  factory: Option<RenderModuleFactory>,
 ) -> Result<Option<(BoxSource, ChunkInitFragments, ChunkInitFragments)>> {
   let chunk = compilation.chunk_by_ukey.expect_get(chunk_ukey);
   let code_gen_result = compilation
@@ -85,7 +131,7 @@ pub fn render_module(
     })
     .expect("render_module_content failed");
 
-  if factory {
+  if let Some(factory) = factory {
     let runtime_requirements = compilation
       .chunk_graph
       .get_module_runtime_requirements(module.identifier(), &chunk.runtime);
@@ -105,7 +151,6 @@ pub fn render_module(
         format!("__unused_webpack_{module_argument}")
       });
     }
-
     if need_exports || need_require {
       let exports_argument = module.get_exports_argument();
       args.push(if need_exports {
@@ -122,10 +167,19 @@ pub fn render_module(
       .get_module_id(module.identifier())
       .as_deref()
       .expect("should have module_id in render_module");
-    sources.add(RawSource::from(
-      serde_json::to_string(&module_id).map_err(|e| error!(e.to_string()))?,
-    ));
-    sources.add(RawSource::from(": "));
+
+    match factory {
+      RenderModuleFactory::Array => {
+        sources.add(RawSource::from(format!("/* {module_id} */")));
+      }
+      RenderModuleFactory::Object => {
+        sources.add(RawSource::from(
+          serde_json::to_string(&module_id).map_err(|e| error!(e.to_string()))?,
+        ));
+        sources.add(RawSource::from(": "));
+      }
+    }
+
     if is_diff_mode() {
       sources.add(RawSource::from(format!(
         "\n{}\n",
@@ -266,4 +320,50 @@ pub fn stringify_array(vec: &[String]) -> String {
       .collect::<Vec<_>>()
       .join(", ")
   )
+}
+
+/// Given a collection of modules to get array bounds for
+/// returns the upper and lower array bounds or `None` if not every module has a number-based id
+fn get_modules_array_bounds(modules: &Vec<&Option<String>>) -> Option<(usize, usize)> {
+  let mut max_id = 0;
+  let mut min_id = usize::MAX;
+
+  for id in modules {
+    let Some(id) = id else {
+      return None;
+    };
+
+    let Ok(i) = id.parse::<usize>() else {
+      return None;
+    };
+
+    max_id = max(max_id, i);
+    min_id = min(min_id, i);
+  }
+
+  if min_id < 16 + min_id.to_string().len() {
+    // add minId x ',' instead of 'Array(minId).concat(…)'
+    min_id = 0;
+  }
+
+  let mut object_overhead: usize = modules.iter().fold(0, |acc, id| {
+    // module id + colon + comma
+    acc + id.as_ref().unwrap().len() + 2
+  });
+
+  if object_overhead == 0 {
+    return None;
+  } else {
+    // -1 because the first module needs no comma
+    object_overhead = object_overhead - 1;
+  }
+
+  // number of commas, or when starting non-zero the length of Array(minId).concat()
+  let array_overhead = if min_id == 0 { max_id } else { 16 } + min_id.to_string().len() + max_id;
+
+  if array_overhead < object_overhead {
+    Some((min_id, max_id))
+  } else {
+    None
+  }
 }

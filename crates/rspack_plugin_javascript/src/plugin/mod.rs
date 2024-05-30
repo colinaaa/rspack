@@ -588,7 +588,7 @@ impl JsPlugin {
           .module_by_identifier(m_identifier)
           .expect("should have module");
         let Some((rendered_module, fragments, additional_fragments)) =
-          render_module(compilation, chunk_ukey, m, all_strict, false)?
+          render_module(compilation, chunk_ukey, m, all_strict, None)?
         else {
           continue;
         };
